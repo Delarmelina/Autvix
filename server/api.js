@@ -10,8 +10,8 @@ app.use(bodyParser.json());
 app.use(cors());
 
 // Import the router
-var router = require('./route/router.js');
-app.use('/', router);
+var authrouter = require('./route/auth.js');
+app.use('/', authrouter);
 
 // API Server Start
 var port = process.env.PORT || 3001;
