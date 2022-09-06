@@ -1,0 +1,49 @@
+.Layout {
+    display: grid;
+    grid-template-columns: max-content auto;
+    grid-template-rows: 50px auto 25px;
+    grid-template-areas:
+        "s h"
+        "s m"
+        "s f";
+    
+    grid-gap: 0px;
+    height: 100vh;
+    width: 100vw;
+    background-color: purple;
+}
+
+header {
+    background-color: red;
+    grid-area: h;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+main {
+    background-color: whitesmoke;
+    grid-area: m;
+
+    display: flex;
+    flex-direction: column;
+
+    /* Scroll */
+    overflow-y: scroll;
+    height: 100%;
+}
+
+aside {
+    background-color: blue;
+    grid-area: s;
+}
+
+footer {
+    background-color: yellow;
+    grid-area: f;
+}
+
+.hovercolor:hover {
+    background-color: #f5f5f5;
+}

@@ -9,9 +9,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cors());
 
-// Import the router
+// Import the multiple routes
 var authrouter = require('./route/auth.js');
-app.use('/', authrouter);
+var genrouter = require('./route/gen.js');
+app.use('/auth', authrouter); // Auth Router
+app.use('/gen', genrouter); // Generic Router
 
 // API Server Start
 var port = process.env.PORT || 3001;

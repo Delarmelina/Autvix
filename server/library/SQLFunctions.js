@@ -6,7 +6,7 @@ function select(sqldata) {
     sql += sqldata.filter ? " WHERE " + sqldata.filter.join(" and ") : "";
 
     console.log(sql);
-
+    
     return sql;
 }
 
@@ -21,8 +21,6 @@ function insert(sqldata) {
             return valor;
         }
     }).join(',') + ")";
-
-    console.log(sql);
 
     return sql;
 }
@@ -39,7 +37,6 @@ function update(sqldata) {
 
     let sql = "UPDATE " + sqldata.tabela + " SET ";
     sql += sqldata.campos.join(',');
-    console.log(sql);
     sql += sqldata.conditions ? " WHERE " + sqldata.conditions.join(" and ") : "";
 
     return sql;

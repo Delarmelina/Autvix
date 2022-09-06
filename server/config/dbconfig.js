@@ -3,7 +3,7 @@ const config = {
     user: 'sa',
     password: 'autvix2008',
     server: '127.0.0.1',
-    database: 'users',
+    database: 'Autvix',
     options: {
         trustedConnection: true,
         enableArithAbort: true,
