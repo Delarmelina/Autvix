@@ -1,25 +1,24 @@
-import React, { Component } from 'react'
+import React from 'react'
 
-import * as Icon from 'react-icons/fa'
 import "./style.css"
 
-import { GetTable } from '../../services/methods/SQLRequisit.js'
+import { GetCode } from '../../services/methods/SQLRequisit.js'
 
 export const Projetos = () => {
 
   const [projetos, setProjetos] = React.useState([])
-  const [loading, setLoading] = React.useState(true)
 
   React.useEffect(() => {
-    GetTable('projects').then(data => {
+    GetCode('select * from projetos p inner join Cliente c on p.id_cliente = c.id_cliente')
+    .then(data => {
       setProjetos(data.map(projeto => {
 
         return (
-          <tr key={projeto.name}>
-            <td>{projeto.name}</td>
-            <td>{projeto.client}</td>
-            <td>{projeto.status}</td>
-            <td>{projeto.begindata}</td>
+          <tr key={projeto.id_cc}>
+            <td>{projeto.id_cc}</td>
+            <td>{projeto.ano}</td>
+            <td>{projeto.cliente}</td>
+            <td>{projeto.descricao}</td>
           </tr>
         )
       }))
@@ -30,12 +29,12 @@ export const Projetos = () => {
     <div className=''>
       {/* Tabela de projetos */}
       <table className='table table-striped table-light table-hover text-center'>
-        <thead className='table-dark border-top'>
+        <thead className='table-dark'>
           <tr>
-            <th>Projeto</th>
+            <th>Centro de Custo</th>
+            <th>Ano</th>
             <th>Cliente</th>
-            <th>Status</th>
-            <th>Data de início</th>
+            <th>Descrição</th>
           </tr>
         </thead>
         <tbody>

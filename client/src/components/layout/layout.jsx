@@ -2,7 +2,6 @@ import React from 'react'
 import { Routes, Route } from "react-router-dom";
 
 import "./style.css"
-
 import * as Icon from 'react-icons/fa'
 
 import { Footer } from './components/Footer'
@@ -10,6 +9,8 @@ import { Header } from './components/Header'
 import { MenuLateral } from './components/MenuLateral'
 
 import { Projetos } from '../../pages/projetos/index'
+import { Colaboradores } from '../../pages/colaboradores/index'
+import { Relatorios } from '../../pages/relatorios/index'
 
 export const Layout = () => {
 
@@ -22,6 +23,8 @@ export const Layout = () => {
             <main className=''>
                 <Routes>
                     <Route path="/projetos" element={<Projetos />} />
+                    <Route path="/colaboradores" element={<Colaboradores />} />
+                    <Route path="/relatorios/*" element={<Relatorios />} />
                     <Route path="*" element={
                         <div className='d-flex bg-secondary text-warning align-items-center justify-content-center' style={{ fontSize: "25px", height: "100%" }}>
                             <Icon.FaExclamationCircle className='mx-4 text-warning'/>

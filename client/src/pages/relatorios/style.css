@@ -1,0 +1,19 @@
+.body-cards {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin: 0px;
+}
+
+.card .card-body {
+    text-decoration: none;
+    padding: 2.3em;
+    border-radius: 10px;
+    font-size: 1.2em;
+}
+
+.card .card-body:hover {
+    cursor: pointer;
+    color: white;
+}

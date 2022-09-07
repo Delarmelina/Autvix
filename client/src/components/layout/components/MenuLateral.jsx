@@ -9,8 +9,9 @@ export const MenuLateral = () => {
     const abas = [
         { id: 1, nome: 'I', link: '/', icon: <Icon.FaHome /> },
         { id: 2, nome: 'R', link: '/relatorios', icon: <Icon.FaFileAlt /> },
-        { id: 3, nome: 'P', link: '/projetos', icon: <Icon.FaProjectDiagram /> },
-        { id: 4, nome: 'C', link: '/calendario', icon: <Icon.FaCalendarAlt /> },
+        { id: 3, nome: 'Co', link: '/colaboradores', icon: <Icon.FaPersonBooth /> },
+        { id: 4, nome: 'P', link: '/projetos', icon: <Icon.FaProjectDiagram /> },
+        { id: 5, nome: 'C', link: '/calendario', icon: <Icon.FaCalendarAlt /> },
     ]
 
     // Retorna pagina aberta no momento
@@ -25,7 +26,7 @@ export const MenuLateral = () => {
         <aside className='nav navbar-dark bg-dark shadow-lg' style={{ width: '70px' }}>
             <div className='flex-column '>
                 <div className='nav-item text-center'>
-                    <a className='nav-link text-info me-0 w-100' href='/'><img src={Logo} className="w-100 px-2 my-2" /> </a>
+                    <a className='nav-link text-info me-0 w-100' href='/'><img src={Logo} alt="logo" className="w-100 px-2 my-2" /> </a>
                 </div>
 
                 <ul className='navbar-nav'>

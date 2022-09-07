@@ -5,6 +5,8 @@ var router = express.Router();
 // Responsaveis pelo Funcionamento do Banco de Dados
 const sql = require('mssql');
 var config = require('../config/dbconfig.js');
+const knexfile = require('../config/knexfile')
+const knex = require('knex')(knexfile)
 
 // Bibliotecas responsaveis pelas gerações e manipulações do password
 const bcrypt = require('bcrypt');
@@ -33,48 +35,39 @@ function validateToken(req, res, next) {
 // Função de criação do novo usuario
 router.post('/newuser', async function (req, res,) {
 
+    // Aquisição do objeto user recebido
+    const user = req.body.user;
+
+    console.log(user);
+
     // Gerar a senha encriptografada para adicionar no banco de dados
-    if (req.body.password !== req.body.confirmpassword || !req.body.password) {
+    if (user.password !== user.confirmpassword || !user.password) {
         return res.status(422).json({ msg: 'Password does not match or is blank !' });
     }
     const salt = await bcrypt.genSalt(12);
-    const hashedPassword = await bcrypt.hash(req.body.password, salt);
+    const hashedPassword = await bcrypt.hash(user.password, salt);  // Senha encriptografada
 
-    // Ajuste do objeto user
-    const user = req.body;
+    // Ajuste no password do objeto user
     user.password = hashedPassword;
     delete user.confirmpassword;
 
     try {
-        let pool = await sql.connect(config);
+        // Verifica no banco de dados se o usuario já existe
+        let UserExist = await knex('Usuarios').where({ matricula: user.matricula })
+        if (UserExist.length > 0) { return res.status(400).json("User already created !") }
 
-        // Texto do cmd SQL para atribuição de novo usuario
-        let text = "if (select COUNT(*) from Usuarios where matricula = " + user.matricula + ") < 1"
-            + "insert into Usuarios values ("
-            + user.matricula + ", '"
-            + user.name + "', '"
-            + user.endereco + "', '"
-            + user.id_dep + "', '"
-            + user.email + "', '"
-            + user.abrev + "', '"
-            + user.born + "', '"
-            + user.contratacao + "', '"
-            + user.password + "', "
-            + user.id_funcao + ")"
+        // Adiciona o novo usuario no banco de dados
+        await knex('Usuarios').insert(user);
 
-        // Escrita do novo usuario no banco de dados
-        let result = await pool.request().query(text);
-        console.log(result.rowsAffected);
-
-        // Resposta da query SQL criada
-        if (result.rowsAffected == 0) {
-            res.status(400).json("Users not created !")
-        }
-        else {
-            res.status(200).json("User created sucessfully !")
+        // Verifica novamente se o usuario foi criado corretamente
+        let UserCreated = await knex('Usuarios').where({ matricula: user.matricula })
+        if (UserCreated.length > 0) {
+            return res.status(200).json("User sucessfully created !");
+        } else {
+            return res.status(400).json("User not sucessfully created !");
         }
 
-    } catch (err) { }
+    } catch (err) { return res.status(400).json("User not sucessfully created : " + err.message) }
 
 });
 
@@ -88,13 +81,16 @@ router.post('/login', async function (req, res) {
     try {
         // Busca os dados do usuario no banco de dados
         let pool = await sql.connect(config);
-        let text = "select matricula, email, password from Usuarios where email = '" + user.email + "'";
+        let text = knex.select('matricula', 'email', 'password')
+            .from('Usuarios')
+            .where('email', '=', user.email)
+            .toString();
         let result = await pool.request().query(text);
 
         // Verifica se o usuario foi encontrado no banco de dados e caso encontrado, 
         // Compara a senha criptografada do banco com a senha digitada pelo usuario
         if (result.rowsAffected < 1) {
-            res.status(400).json("Users not Exist !")
+            return res.status(400).json("Users not Exist !")
         }
         else {
             let validatePassword = await bcrypt.compare(user.password, result.recordset[0].password)
@@ -104,19 +100,19 @@ router.post('/login', async function (req, res) {
                 // Geração do token de autenticação
                 const token = jwt.sign(
                     { id: result.recordset[0].matricula },
-                    JWT_SECRET, { expiresIn: "5m", }
+                    JWT_SECRET, { expiresIn: "2h", }
                 );
-                res.status(200).json({ token }) // Retorna o token de autenticação para o front end
+                return res.status(200).json({ token }) // Retorna o token de autenticação para o front end
             }
             else {
-                res.status(401).json("Password incorrect !")
+                return res.status(401).json("Password incorrect !")
             }
         }
-    } catch (err) { res.status(400).json("Erro na autenticação : " + err.message) };
+    } catch (err) { return res.status(400).json("Erro na autenticação : " + err.message) };
 });
 
 // Função que faz o teste de validação do token de usuario para verificar se está logado
-router.post('/validate', validateToken ,async function (req, res) {
+router.post('/validate', validateToken, async function (req, res) {
 
     const token = req.headers.authorization;    // Obtem o token do header do front end
 
@@ -129,13 +125,14 @@ router.post('/validate', validateToken ,async function (req, res) {
             const decoded = jwt.verify(token, JWT_SECRET);
 
             // Busca no banco de dados, as informações referentes ao usuario
-            let pool = await sql.connect(config);
-            let text = "select matricula, nome, email from Usuarios where matricula = " + decoded.id;
-            let result = await pool.request().query(text);
+            let result = await knex
+                .select('matricula', 'nome', 'email')
+                .from('Usuarios')
+                .where({ matricula: decoded.id })
 
             // If Usuario encontrado, então o token é valido e retorna "encontrado"
-            if (result.recordset.length > 0) {
-                return res.status(200).json({ msg: "User found: " + result.recordset[0].nome })
+            if (result.length > 0) {
+                return res.status(200).json({ msg: "User found: " + result[0].nome })
             } else {
                 return res.status(400).json({ msg: "User not found" })
             }
