@@ -38,8 +38,6 @@ router.post('/newuser', async function (req, res,) {
     // Aquisição do objeto user recebido
     const user = req.body.user;
 
-    console.log(user);
-
     // Gerar a senha encriptografada para adicionar no banco de dados
     if (user.password !== user.confirmpassword || !user.password) {
         return res.status(422).json({ msg: 'Password does not match or is blank !' });
@@ -132,7 +130,7 @@ router.post('/validate', validateToken, async function (req, res) {
 
             // If Usuario encontrado, então o token é valido e retorna "encontrado"
             if (result.length > 0) {
-                return res.status(200).json({ msg: "User found: " + result[0].nome })
+                return res.status(200).json( result[0].matricula )
             } else {
                 return res.status(400).json({ msg: "User not found" })
             }

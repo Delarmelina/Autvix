@@ -21,3 +21,15 @@ export async function GetCode(code) {
 
     return res.data;
 }
+
+// Insere uma nova linha em qualquer tabela do banco de dados
+export async function NewRowOnTable(table, data) {
+    
+    // Recebe o nome da tabela e a data para preenchimento
+    let res = await api.post("gen/newRowOnTable", {
+        table: table,
+        data: data
+    })
+
+    return res.data;
+}

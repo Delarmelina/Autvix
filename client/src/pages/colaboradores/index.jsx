@@ -47,7 +47,7 @@ export const Colaboradores = () => {
               <td>{user.matricula}</td>
               <td>{user.nome}</td>
               <td>{user.email}</td>
-              <td>{user.abrev}</td>
+              <td>{user.funcao}</td>
               <td>{user.departamento}</td>
             </tr>
           )
@@ -143,7 +143,7 @@ export const Colaboradores = () => {
             <th>Matricula</th>
             <th>Nome</th>
             <th>Email</th>
-            <th>Abreviatura</th>
+            <th>Função</th>
             <th>Departamento</th>
           </tr>
         </thead>

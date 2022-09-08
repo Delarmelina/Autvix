@@ -58,6 +58,8 @@ export async function VerifyLogin() {
         let res = await api.post("/auth/validate",
             { Headers: { "authorization": localStorage.getItem("token") } });
 
+        localStorage.setItem("9S94R10", res.data);
+
         if (res.status === 200) {
             return 0;   // Usuário logado
         }
