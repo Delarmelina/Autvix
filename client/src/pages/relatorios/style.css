@@ -2,20 +2,27 @@
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    justify-content: space-between;
+    justify-content: center;
     margin: 0px;
 }
 
 .card .card-body {
     text-decoration: none;
-    padding: 2.3em;
+    padding-right: 1.2em;
+    padding-left: 1.2em;
     border-radius: 10px;
     font-size: 1.2em;
+    min-width: 200px;
+    text-align: center;
+    text-transform: uppercase;
+    color: #000;
+    box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+    text-shadow: 2px 2px 2px #FFFC;
 }
 
 .card .card-body:hover {
     cursor: pointer;
-    color: white;
+    background-color: #0AA3C2
 }
 
 .h-100 {
@@ -30,4 +37,11 @@
     font-size: 0.9em !important;
     color: #6C757D !important;
     margin: 0px !important;
+}
+
+.table-body {
+    text-align: center;
+    font-size: 0.7em;
+    padding: 0;
+    margin: 0;
 }

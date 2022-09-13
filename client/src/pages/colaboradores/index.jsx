@@ -38,7 +38,7 @@ export const Colaboradores = () => {
   }, [])
 
   React.useEffect(() => {
-    GetCode('select * from Usuarios u join Funcoes f on u.id_funcao = f.id_funcao join Departamentos d on f.id_dep = d.id_dep')
+    GetCode('select * from Usuarios u join Funcoes f on u.id_funcao = f.id_funcao join Departamentos d on f.id_dep = d.id_dep where u.matricula > 0')
       .then(data => {
         setUsuarios(data.map(user => {
 
