@@ -1,17 +1,27 @@
 import React from 'react'
 
 import "../../style.css"
+import * as Icon from 'react-icons/fa'
 
-import { GetCode, NewRowOnTable } from '../../../../services/methods/SQLRequisit.js'
+import { GetCode, NewRowOnTable, GetTable } from '../../../../services/methods/SQLRequisit.js'
 import { ModalButton } from '../../../../components/components/modalButton'
 import { GenTable } from '../../../../components/components/genTable'
 import { Container100 } from '../../../../components/components/container100'
 
 export const RH = () => {
 
-    const [folgaPerm, setFolgaPerm] = React.useState([])
-    const [RHs, setRHs] = React.useState([])
-    const [preench, setPreench] = React.useState({
+    // Variáveis de renderização
+    const [Ativ, setAtivs] = React.useState([])             // Renderização em tela da variavel "atividades"
+    const [RHs, setRHs] = React.useState([])                // Lista dos RHs preenchidos
+    
+    // Variáveis de lista com informações
+    const [folgaPerm, setFolgaPerm] = React.useState([])    // Funcionário com permissão de autorizar folgas/desvios
+    const [projetos, setProjetos] = React.useState([])      // Lista de projetos em andamento
+
+    // Variáveis de funcionamento da lógica
+    const [qtAtiv, setQtAtiv] = React.useState(false)       // Varialvel auxiliar que é alterada para a tabela recarregar
+    const [atividades, setAtividades] = React.useState([])  // Armazena em object as atividades sendo preenchidas
+    const [preench, setPreench] = React.useState({          // Função que armazena o preenchimento do novo RH
         matricula: "",
         email: "",
         data: "",
@@ -21,30 +31,9 @@ export const RH = () => {
         just: "",
         obs: ""
     })
-    const [atividades, setAtividades] = React.useState([{
-        id_ativ: 0,
-        id_cc: "",
-        os: 0,
-        tipo_aten: 0,
-        tipo_ativ: 0,
-        hora_inicio: "",
-        hora_final: "",
-        descricao: "",
-        arq: "",
-        desvio: 0,
-        mot_desv: "",
-        loc_desv: "",
-        tmp_desv: "",
-        aut_desv: ""
-    }])
 
-    React.useEffect(() => {
-        preench.trabalhou === '1' ? setPreench({ ...preench, autorizacao: 0, just: "" }) :
-            preench.trabalhou === '2' ? setPreench({ ...preench, id_ativ: 0, just: "" }) :
-                preench.trabalhou === '3' ? setPreench({ ...preench, id_ativ: 0, autorizacao: 0 }) :
-                    console.log("");
-    }, [preench.trabalhou])
-
+    // Função que renderiza as opções e dados que necessitam ser renderizados apenas no primeiro momento
+    // Tal como: "Preenchimento das opções disponiveis na seleção, obtenção da matricula do usuario logado"
     React.useEffect(() => {
         GetCode("select u.matricula, nome from perm_users p join Usuarios u on u.matricula = p.matricula where id_tipo = 'AUT'")
             .then(data => {
@@ -55,9 +44,16 @@ export const RH = () => {
                     )
                 }))
             })
-    }, [])
 
-    React.useEffect(() => {
+        GetTable("projetos")
+            .then(data => {
+                setProjetos(data.map(projeto => {
+                    return (
+                        <option key={projeto.id_cc} value={projeto.id_cc}>{projeto.id_cc}</option>
+                    )
+                }))
+            })
+
         let userLog = localStorage.getItem('9S94R10');
         GetCode(`select matricula, email from usuarios where matricula = ${userLog}`)
             .then((user) => {
@@ -65,6 +61,15 @@ export const RH = () => {
             })
     }, [])
 
+    // Função que controla os campos do formulario de preenchimento para casa o funcionario tenha ou não trabalhado
+    React.useEffect(() => {
+        preench.trabalhou === '1' ? setPreench({ ...preench, autorizacao: 0, just: "" }) :
+            preench.trabalhou === '2' ? setPreench({ ...preench, id_ativ: 0, just: "" }) :
+                preench.trabalhou === '3' ? setPreench({ ...preench, id_ativ: 0, autorizacao: 0 }) :
+                    console.log("");
+    }, [preench.trabalhou])
+
+    // Função que renderiza a tabela de RH preenchidos
     React.useEffect(() => {
 
         let SQLCode = "select u.email, p.data, trabalhou, obs, a.nome as aut, id_ativ from preench_rh p "
@@ -93,6 +98,104 @@ export const RH = () => {
             })
     }, [])
 
+    // Função que renderiza a tabela de atividades dentro do Modal de preencher novo relatório
+    React.useEffect(() => {
+        setAtivs(atividades.map((ativ, i) => {
+
+            return (
+                <tr className='listaAtividades' style={{ fontSize: '0.7em' }} key={i}>
+                    <td style={{ minWidth: '125px' }}>
+                        <select className='input-ativ' value={ativ.id_cc} onChange={e => {
+                            let tempAtiv = atividades
+                            tempAtiv[i].id_cc = e.target.value
+                            setAtividades(tempAtiv)
+                            setQtAtiv(!qtAtiv)
+                        }}>
+                            <option value={""} disabled>Projeto</option>
+                            {projetos}
+                        </select>
+                    </td>
+                    <td style={{ maxWidth: '50px' }}><input type="text" className="input-ativ" value={ativ.os} onChange={e => {
+                        let tempAtiv = atividades
+                        tempAtiv[i].os = e.target.value
+                        setAtividades(tempAtiv)
+                        setQtAtiv(!qtAtiv)
+                    }} /></td>
+                    <td><input type="text" className="input-ativ" value={ativ.tipo_aten} onChange={e => {
+                        let tempAtiv = atividades
+                        tempAtiv[i].tipo_aten = e.target.value
+                        setAtividades(tempAtiv)
+                        setQtAtiv(!qtAtiv)
+                    }} /></td>
+                    <td><input type="text" className="input-ativ" value={ativ.tipo_ativ} onChange={e => {
+                        let tempAtiv = atividades
+                        tempAtiv[i].tipo_ativ = e.target.value
+                        setAtividades(tempAtiv)
+                        setQtAtiv(!qtAtiv)
+                    }} /></td>
+                    <td><input type="time" className="input-ativ text-center" value={ativ.hora_inicio} onChange={e => {
+                        let tempAtiv = atividades
+                        tempAtiv[i].hora_inicio = e.target.value
+                        setAtividades(tempAtiv)
+                        setQtAtiv(!qtAtiv)
+                    }} /></td>
+                    <td><input type="time" className="input-ativ text-center" value={ativ.hora_final} onChange={e => {
+                        let tempAtiv = atividades
+                        tempAtiv[i].hora_final = e.target.value
+                        setAtividades(tempAtiv)
+                        setQtAtiv(!qtAtiv)
+                    }} /></td>
+                    <td style={{ minWidth: '300px' }}><textarea type="text" className="input-ativ" value={ativ.descricao} onChange={e => {
+                        let tempAtiv = atividades
+                        tempAtiv[i].descricao = e.target.value
+                        setAtividades(tempAtiv)
+                        setQtAtiv(!qtAtiv)
+                    }} /></td>
+                    <td style={{ maxWidth: '50px' }}><input type="text" className="input-ativ" value={ativ.desvio} onChange={e => {
+                        let tempAtiv = atividades
+                        tempAtiv[i].desvio = e.target.value
+                        setAtividades(tempAtiv)
+                        setQtAtiv(!qtAtiv)
+                    }} /></td>
+
+                    <td><button type="button" className='p-0 btn' onClick={() => removeAtividade(i)}><Icon.FaTrash style={{ color: 'red' }} /></button></td>
+                </tr>
+            )
+        }))
+    }, [qtAtiv])
+
+    // Função usada para controlar o botão que insere nova atividade no RH
+    function addNovaAtividade() {
+        const newAtiv = atividades.concat({
+            id_ativ: 0,
+            id_cc: "",
+            os: 0,
+            tipo_aten: 0,
+            tipo_ativ: 0,
+            hora_inicio: "",
+            hora_final: "",
+            descricao: "",
+            arq: "",
+            desvio: 0,
+            mot_desv: "",
+            loc_desv: "",
+            tmp_desv: "",
+            aut_desv: ""
+        })
+
+        setAtividades(newAtiv)
+        setQtAtiv(!qtAtiv)
+    }
+
+    // Função usada para remover atividade da lista do novo preenchimento de RH
+    function removeAtividade(ativ) {
+        const newAtiv = atividades
+        newAtiv.splice(ativ, 1)
+        setAtividades(newAtiv)
+        setQtAtiv(!qtAtiv)
+    }
+
+    // Função que faz o envio dos dados de preenchimento de novo RH para o banco de dados
     async function SendDatatoDB() {
         let UltAtiv = await GetCode('select MAX(id_ativ) as ativ from preench_rh')
 
@@ -102,29 +205,6 @@ export const RH = () => {
 
         await NewRowOnTable('preench_rh', preenchSend)
     }
-
-    // React.useEffect(() => {
-    //     const newList = atividades.concat({
-    //         id_ativ: 0,
-    //         id_cc: "",
-    //         os: 0,
-    //         tipo_aten: 0,
-    //         tipo_ativ: 0,
-    //         hora_inicio: "",
-    //         hora_final: "",
-    //         descricao: "",
-    //         arq: "",
-    //         desvio: 0,
-    //         mot_desv: "",
-    //         loc_desv: "",
-    //         tmp_desv: "",
-    //         aut_desv: ""
-    //     })
-
-    //     setAtividades(newList)
-
-    //     console.log(atividades)
-    // }, [preench.trabalhou])
 
     return (
         <>
@@ -155,33 +235,25 @@ export const RH = () => {
                                     <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Atividades</label>
 
                                     <Container100>
-                                        <table>
-                                            <thead style={{ fontSize: "0.8em", backgroundColor: "#AAA" }}>
+                                        <table className="text-center tabela-ativ">
+                                            <thead style={{ fontSize: "0.8em", backgroundColor: "#777", color:"white" }}>
                                                 <tr>
                                                     <th className='p-1'>Centro de Custo</th>
-                                                    <th>Hora Inicial</th>
-                                                    <th>Hora Final</th>
-                                                    <th>Deletar</th>
-                                                    <th>Editar</th>
+                                                    <th>OS</th>
+                                                    <th>Atendimento</th>
+                                                    <th>Atividade</th>
+                                                    <th>Horário Inicio</th>
+                                                    <th>Horário Término</th>
+                                                    <th>Descrição</th>
+                                                    <th>Desvio</th>
+                                                    <th><Icon.FaTrash style={{ color: 'red' }} /></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {
-                                                    atividades.map((ativ, key) => {
-                                                        return (
-                                                            <tr key={key}>
-                                                                <td>{ativ.id_cc}</td>
-                                                                <td>{ativ.hora_inicio}</td>
-                                                                <td>{ativ.hora_final}</td>
-                                                                <td>DEL</td>
-                                                                <td>ED</td>
-                                                            </tr>
-                                                        )
-                                                    })
-                                                }
+                                                {Ativ}
                                             </tbody>
                                         </table>
-                                        <button type="button" class="btn btn-primary">Add Atividade</button>
+                                        <button type="button" className="btn btn-secondary" onClick={addNovaAtividade}>Add Atividade</button>
                                     </Container100>
 
                                 </div>

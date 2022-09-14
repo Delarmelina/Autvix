@@ -6,7 +6,7 @@ export const ModalButton = (props) => {
         <>
             <button type="button" className={`btn btn-${props.ButtonColor} mx-2`} data-bs-toggle="modal" data-bs-target={`#${props.ModalName}`}>{props.ButtonTitle}</button>
             <div className="modal fade" id={props.ModalName} tabIndex="-1" aria-labelledby={`${props.ModalName}Modal`} aria-hidden="true">
-                <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                <div className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
                     <div className="modal-content">
                         <div className="modal-header">
                             <h5 className="modal-title">{props.ModalTitle}</h5>
