@@ -48,7 +48,7 @@
 
 .listaAtividades .input-ativ, textarea {
     margin: 0px !important;
-    padding: 0 !important;
+    padding: 2px !important;
     border: none !important;
     border-radius: 0 !important;
     width: 100%;
@@ -61,4 +61,14 @@ tr, td, th { padding: 0; margin: 0; padding: 0 }
 
 input[type="time"]::-webkit-calendar-picker-indicator {
     margin-right: 5px;
+}
+
+.checktype {
+    height: 20px !important;
+    width: 20px !important;
+    border-radius: 0 !important;
+}
+
+textarea {
+    text-align: left !important;
 }

@@ -13,10 +13,13 @@ export const RH = () => {
     // Variáveis de renderização
     const [Ativ, setAtivs] = React.useState([])             // Renderização em tela da variavel "atividades"
     const [RHs, setRHs] = React.useState([])                // Lista dos RHs preenchidos
-    
+
     // Variáveis de lista com informações
     const [folgaPerm, setFolgaPerm] = React.useState([])    // Funcionário com permissão de autorizar folgas/desvios
     const [projetos, setProjetos] = React.useState([])      // Lista de projetos em andamento
+    const [tiposAtend, setTiposAtend] = React.useState([])  // Lista para ser colocado os tipos de atendimentos
+    const [tiposAtiv, setTiposAtiv] = React.useState([])    // Lista para ser colocado os tipos de atividades
+    const [listaOS, setListaOS] = React.useState([])        // Lista de OS's para serem colocadas nas atividades
 
     // Variáveis de funcionamento da lógica
     const [qtAtiv, setQtAtiv] = React.useState(false)       // Varialvel auxiliar que é alterada para a tabela recarregar
@@ -59,6 +62,30 @@ export const RH = () => {
             .then((user) => {
                 setPreench({ ...preench, email: user[0].email, matricula: user[0].matricula });
             })
+
+        GetTable("tipo_atend").then((data) => {
+            setTiposAtend(data.map(tipos => {
+                return (
+                    <option key={tipos.tipo_atend} value={tipos.tipo_atend}>{tipos.tipo_atend}. {tipos.atend}</option>
+                )
+            }))
+        })
+
+        GetTable("tipo_ativ").then((data) => {
+            setTiposAtiv(data.map(tipos => {
+                return (
+                    <option key={tipos.tipo_ativ} value={tipos.tipo_ativ}>{tipos.tipo_ativ}. {tipos.ativ}</option>
+                )
+            }))
+        })
+
+        let TempListaOs = Array.from({ length: 99 }, (_, i) => i + 1)
+        setListaOS(TempListaOs.map(os => {
+            return (
+                <option key={os} value={os}>{os}</option>
+            )
+        }))
+
     }, [])
 
     // Função que controla os campos do formulario de preenchimento para casa o funcionario tenha ou não trabalhado
@@ -115,48 +142,74 @@ export const RH = () => {
                             {projetos}
                         </select>
                     </td>
-                    <td style={{ maxWidth: '50px' }}><input type="text" className="input-ativ" value={ativ.os} onChange={e => {
-                        let tempAtiv = atividades
-                        tempAtiv[i].os = e.target.value
-                        setAtividades(tempAtiv)
-                        setQtAtiv(!qtAtiv)
-                    }} /></td>
-                    <td><input type="text" className="input-ativ" value={ativ.tipo_aten} onChange={e => {
-                        let tempAtiv = atividades
-                        tempAtiv[i].tipo_aten = e.target.value
-                        setAtividades(tempAtiv)
-                        setQtAtiv(!qtAtiv)
-                    }} /></td>
-                    <td><input type="text" className="input-ativ" value={ativ.tipo_ativ} onChange={e => {
-                        let tempAtiv = atividades
-                        tempAtiv[i].tipo_ativ = e.target.value
-                        setAtividades(tempAtiv)
-                        setQtAtiv(!qtAtiv)
-                    }} /></td>
+
+                    <td style={{ minWidth: "55px" }}>
+                        <select className='input-ativ' value={ativ.os} onChange={e => {
+                            let tempAtiv = atividades
+                            tempAtiv[i].os = e.target.value
+                            setAtividades(tempAtiv)
+                            setQtAtiv(!qtAtiv)
+                        }}>
+                            <option value={0} disabled>NA</option>
+                            {
+                                listaOS
+                            }
+                        </select>
+                    </td>
+
+                    <td style={{}}>
+                        <select className='input-ativ' value={ativ.tipo_atend} onChange={e => {
+                            let tempAtiv = atividades
+                            tempAtiv[i].tipo_atend = e.target.value
+                            setAtividades(tempAtiv)
+                            setQtAtiv(!qtAtiv)
+                        }}>
+                            <option value={""} disabled>Tipo Atend</option>
+                            {tiposAtend}
+                        </select>
+                    </td>
+
+                    <td style={{}}>
+                        <select className='input-ativ' value={ativ.tipo_ativ} onChange={e => {
+                            let tempAtiv = atividades
+                            tempAtiv[i].tipo_ativ = e.target.value
+                            setAtividades(tempAtiv)
+                            setQtAtiv(!qtAtiv)
+                        }}>
+                            <option value={""} disabled>Tipo Ativ</option>
+                            {tiposAtiv}
+                        </select>
+                    </td>
+
                     <td><input type="time" className="input-ativ text-center" value={ativ.hora_inicio} onChange={e => {
                         let tempAtiv = atividades
                         tempAtiv[i].hora_inicio = e.target.value
                         setAtividades(tempAtiv)
                         setQtAtiv(!qtAtiv)
                     }} /></td>
+
                     <td><input type="time" className="input-ativ text-center" value={ativ.hora_final} onChange={e => {
                         let tempAtiv = atividades
                         tempAtiv[i].hora_final = e.target.value
                         setAtividades(tempAtiv)
                         setQtAtiv(!qtAtiv)
                     }} /></td>
+
                     <td style={{ minWidth: '300px' }}><textarea type="text" className="input-ativ" value={ativ.descricao} onChange={e => {
                         let tempAtiv = atividades
                         tempAtiv[i].descricao = e.target.value
                         setAtividades(tempAtiv)
                         setQtAtiv(!qtAtiv)
                     }} /></td>
-                    <td style={{ maxWidth: '50px' }}><input type="text" className="input-ativ" value={ativ.desvio} onChange={e => {
-                        let tempAtiv = atividades
-                        tempAtiv[i].desvio = e.target.value
-                        setAtividades(tempAtiv)
-                        setQtAtiv(!qtAtiv)
-                    }} /></td>
+
+                    <td style={{ maxWidth: '50px' }}>
+                        <input type="checkbox" className="checktype input-ativ" value={ativ.desvio} onChange={e => {
+                            let tempAtiv = atividades
+                            tempAtiv[i].desvio = e.target.value
+                            setAtividades(tempAtiv)
+                            setQtAtiv(!qtAtiv)
+                        }} />
+                    </td>
 
                     <td><button type="button" className='p-0 btn' onClick={() => removeAtividade(i)}><Icon.FaTrash style={{ color: 'red' }} /></button></td>
                 </tr>
@@ -170,7 +223,7 @@ export const RH = () => {
             id_ativ: 0,
             id_cc: "",
             os: 0,
-            tipo_aten: 0,
+            tipo_atend: 0,
             tipo_ativ: 0,
             hora_inicio: "",
             hora_final: "",
@@ -204,6 +257,13 @@ export const RH = () => {
         preenchSend.id_ativ = UltAtiv[0].ativ + 1
 
         await NewRowOnTable('preench_rh', preenchSend)
+        
+        let SendAtiv = atividades
+
+        SendAtiv.map(async atividade => {
+            atividade.id_ativ = preenchSend.id_ativ
+            await NewRowOnTable('atividades', atividade)
+        })
     }
 
     return (
@@ -236,7 +296,7 @@ export const RH = () => {
 
                                     <Container100>
                                         <table className="text-center tabela-ativ">
-                                            <thead style={{ fontSize: "0.8em", backgroundColor: "#777", color:"white" }}>
+                                            <thead style={{ fontSize: "0.8em", backgroundColor: "#777", color: "white" }}>
                                                 <tr>
                                                     <th className='p-1'>Centro de Custo</th>
                                                     <th>OS</th>
