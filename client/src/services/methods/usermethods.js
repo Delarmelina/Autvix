@@ -70,4 +70,14 @@ export async function VerifyLogin() {
     }
 }
 
+export async function VerifyTag(tags) {
 
+    try {
+        // Verifica se possui as tags
+        let res = await api.post("auth/testPerm", {
+            tags: tags
+        });
+
+        return res.data.perm
+    } catch {}
+}

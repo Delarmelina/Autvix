@@ -18,6 +18,8 @@ router.post('/getany', async function (req, res) {
 router.post('/getCode', async function (req, res) {
     const { code } = req.body;
 
+    console.log(code)
+
     let pool = await sql.connect(config);
     let result = (await pool.request().query(code));
     return res.status(200).json(result.recordset)

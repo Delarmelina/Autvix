@@ -4,6 +4,7 @@ import "../../style.css"
 import * as Icon from 'react-icons/fa'
 
 import { GetCode, NewRowOnTable, GetTable } from '../../../../services/methods/SQLRequisit.js'
+import { VerifyTag } from '../../../../services/methods/usermethods.js'
 import { ModalButton } from '../../../../components/components/modalButton'
 import { GenTable } from '../../../../components/components/genTable'
 import { Container100 } from '../../../../components/components/container100'
@@ -13,10 +14,12 @@ export const RH = () => {
     // Variáveis de renderização
     const [Ativ, setAtivs] = React.useState([])             // Renderização em tela da variavel "atividades"
     const [RHs, setRHs] = React.useState([])                // Lista dos RHs preenchidos
+    const [listPag, setListPag] = React.useState([])        // Lista da paginação
 
     // Variáveis de lista com informações
     const [folgaPerm, setFolgaPerm] = React.useState([])    // Funcionário com permissão de autorizar folgas/desvios
     const [projetos, setProjetos] = React.useState([])      // Lista de projetos em andamento
+    const [emails, setEmails] = React.useState([])      // Lista de projetos em andamento
     const [tiposAtend, setTiposAtend] = React.useState([])  // Lista para ser colocado os tipos de atendimentos
     const [tiposAtiv, setTiposAtiv] = React.useState([])    // Lista para ser colocado os tipos de atividades
     const [listaOS, setListaOS] = React.useState([])        // Lista de OS's para serem colocadas nas atividades
@@ -24,6 +27,17 @@ export const RH = () => {
     // Variáveis de funcionamento da lógica
     const [qtAtiv, setQtAtiv] = React.useState(false)       // Varialvel auxiliar que é alterada para a tabela recarregar
     const [atividades, setAtividades] = React.useState([])  // Armazena em object as atividades sendo preenchidas
+    const [refresh, setRefresh] = React.useState(false)     // Variavel para recarregar a tabela de RH
+    const [qPag, setQpag] = React.useState(15)               // Quantidade de linhas por pagina disponíveis
+    const [pagination, setPagination] = React.useState(0)   // Pagina atual da tabela de RH
+    const [RHPerm, setRHPerm] = React.useState(false)       // Verifica autorização de usuario para a planilha RH
+    const [filtros, setFiltros] = React.useState({          // Funcionamento dos Filtros
+        email: "",
+        datai: "",
+        dataf: "",
+        cc: "",
+        trabalhou: 0
+    })
     const [preench, setPreench] = React.useState({          // Função que armazena o preenchimento do novo RH
         matricula: "",
         email: "",
@@ -38,6 +52,11 @@ export const RH = () => {
     // Função que renderiza as opções e dados que necessitam ser renderizados apenas no primeiro momento
     // Tal como: "Preenchimento das opções disponiveis na seleção, obtenção da matricula do usuario logado"
     React.useEffect(() => {
+
+        VerifyTag(['RH']).then(data => {
+            data > 0 ? setRHPerm(true) : setRHPerm(false)
+        })
+
         GetCode("select u.matricula, nome from perm_users p join Usuarios u on u.matricula = p.matricula where id_tipo = 'AUT'")
             .then(data => {
                 setFolgaPerm(data.map(user => {
@@ -57,10 +76,20 @@ export const RH = () => {
                 }))
             })
 
+        GetCode("select * from usuarios where matricula > 0")
+            .then(data => {
+                setEmails(data.map(user => {
+                    return (
+                        <option key={user.matricula} value={user.matricula}>{user.nome}</option>
+                    )
+                }))
+            })
+
         let userLog = localStorage.getItem('9S94R10');
-        GetCode(`select matricula, email from usuarios where matricula = ${userLog}`)
+        GetCode(`select matricula, email, nome from usuarios where matricula = ${userLog}`)
             .then((user) => {
                 setPreench({ ...preench, email: user[0].email, matricula: user[0].matricula });
+                setFiltros({ ...filtros, email: user[0].matricula })
             })
 
         GetTable("tipo_atend").then((data) => {
@@ -92,22 +121,65 @@ export const RH = () => {
     React.useEffect(() => {
         preench.trabalhou === '1' ? setPreench({ ...preench, autorizacao: 0, just: "" }) :
             preench.trabalhou === '2' ? setPreench({ ...preench, id_ativ: 0, just: "" }) :
-                preench.trabalhou === '3' ? setPreench({ ...preench, id_ativ: 0, autorizacao: 0 }) :
-                    console.log("");
+                preench.trabalhou === '3' ? setPreench({ ...preench, id_ativ: 0, autorizacao: 0 }) : localStorage.getItem("token");
     }, [preench.trabalhou])
 
     // Função que renderiza a tabela de RH preenchidos
     React.useEffect(() => {
 
-        let SQLCode = "select u.email, p.data, trabalhou, obs, a.nome as aut, id_ativ from preench_rh p "
+        let AuxCode = 0
+        let SQLCode = "select u.email, p.data, trabalhou, obs, a.nome as aut, id_ativ, u.matricula from preench_rh p "
         SQLCode += "join usuarios u "
         SQLCode += "on u.matricula = p.matricula "
         SQLCode += "join usuarios a "
-        SQLCode += "on p.autorizacao = a.matricula"
+        SQLCode += "on p.autorizacao = a.matricula "
+
+        if (filtros.trabalhou > 0) {
+            SQLCode += `where trabalhou = ${filtros.trabalhou} `
+            AuxCode = 1
+        }
+
+        if (filtros.email > 0 && AuxCode == 0) {
+            SQLCode += `where u.matricula = '${filtros.email}' `
+            AuxCode = 1
+        } else if (filtros.email > 0 && AuxCode == 1) {
+            SQLCode += `and u.matricula = '${filtros.email}' `
+        }
+
+        if (filtros.datai != '' && AuxCode == 0) {
+            SQLCode += `where p.data > '${filtros.datai}' `
+            AuxCode = 1
+        } else if (filtros.datai != '' && AuxCode == 1) {
+            SQLCode += `and p.data > '${filtros.datai}' `
+        }
+
+        if (filtros.dataf != '' && AuxCode == 0) {
+            SQLCode += `where p.data < '${filtros.dataf}' `
+            AuxCode = 1
+        } else if (filtros.dataf != '' && AuxCode == 1) {
+            SQLCode += `and p.data < '${filtros.dataf}' `
+        }
+
+        GetCode(SQLCode.replace('u.email, p.data, trabalhou, obs, a.nome as aut, id_ativ, u.matricula', 'count(*) as page'))
+            .then(data => {
+                let npages = Math.ceil(data[0].page / qPag)
+                let arr = []
+
+                for (var i = 0; i < npages; i++) { arr.push(i) }
+
+                setListPag(arr.map(i => {
+                    return <li key={i} className="page-item active" aria-current="page">
+                        <a className="page-link" href="#" onClick={e => setPagination(i)}>{i + 1}</a>
+                    </li>
+                }))
+
+            })
+
+        SQLCode += `ORDER BY data desc offset ${pagination * qPag} rows fetch next ${qPag} rows only`
 
         GetCode(SQLCode)
             .then(data => {
-                setRHs(data.map((RH, index) => {
+                setRHs(data.map(function (RH, index) {
 
                     let date = RH.data.slice(0, 10).split('-')
 
@@ -118,12 +190,13 @@ export const RH = () => {
                             <td>{RH.trabalhou == 1 ? "Sim" : RH.trabalhou == 2 ? "Atestado" : "Folga"}</td>
                             <td>{RH.obs}</td>
                             <td>{RH.trabalhou === 3 ? RH.aut : ""}</td>
-                            <td>{RH.id_ativ}</td>
+                            <td><a className='p-0' href={`/relatorios/RH/${RH.id_ativ}`}><button className='btn btn-info p-0' style={{ width: "60px" }}>+</button></a></td>
                         </tr>
                     )
                 }))
             })
-    }, [])
+
+    }, [refresh, filtros, pagination, qPag])
 
     // Função que renderiza a tabela de atividades dentro do Modal de preencher novo relatório
     React.useEffect(() => {
@@ -257,94 +330,147 @@ export const RH = () => {
         preenchSend.id_ativ = UltAtiv[0].ativ + 1
 
         await NewRowOnTable('preench_rh', preenchSend)
-        
+
         let SendAtiv = atividades
 
         SendAtiv.map(async atividade => {
             atividade.id_ativ = preenchSend.id_ativ
             await NewRowOnTable('atividades', atividade)
         })
+        setRefresh(!refresh)
     }
 
     return (
         <>
-            <div className="d-flex flex justify-content-end bg-dark p-1">
-                <button type="button" className="btn btn-secondary mx-2" disabled>Meus RHs</button>
-                <button type="button" className="btn btn-secondary mx-2" disabled>Todos RHs</button>
-                <button type="button" className="btn btn-secondary mx-2" disabled>Resumo</button>
-                <ModalButton ButtonColor='success' ModalName='PreenchRH' ButtonTitle='Responder' ModalTitle='Preencher Novo Relatório' func={SendDatatoDB} ConfirmTitle='Responder'>
-                    <form>
-                        <div className="input-group-sm mb-3 in-gp">
-                            <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Email</label>
-                            <input type="text" className="form-control" placeholder="Email" value={preench.email} onChange={e => { setPreench({ ...preench, email: e.target.value }) }} />
-                        </div>
-                        <div className="input-group-sm mb-3 in-gp">
-                            <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Data de preenchimento</label>
-                            <input type="date" className="form-control" placeholder="Data" value={preench.data} onChange={e => { setPreench({ ...preench, data: e.target.value }) }} />
-                        </div>
-                        <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Trabalhou nesta data?</label>
-                        <select className="in-sel form-select" defaultValue="0" onChange={e => { setPreench({ ...preench, trabalhou: e.target.value }) }}>
-                            <option value="0" disabled>Trabalhou nesta data?</option>
-                            <option value="1">Sim</option>
-                            <option value="2">Atestado Médico</option>
-                            <option value="3">Folga</option>
-                        </select>
-                        {
-                            preench.trabalhou === "1" ?
-                                <div className="input-group-sm mb-3 in-gp">
-                                    <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Atividades</label>
-
-                                    <Container100>
-                                        <table className="text-center tabela-ativ">
-                                            <thead style={{ fontSize: "0.8em", backgroundColor: "#777", color: "white" }}>
-                                                <tr>
-                                                    <th className='p-1'>Centro de Custo</th>
-                                                    <th>OS</th>
-                                                    <th>Atendimento</th>
-                                                    <th>Atividade</th>
-                                                    <th>Horário Inicio</th>
-                                                    <th>Horário Término</th>
-                                                    <th>Descrição</th>
-                                                    <th>Desvio</th>
-                                                    <th><Icon.FaTrash style={{ color: 'red' }} /></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {Ativ}
-                                            </tbody>
-                                        </table>
-                                        <button type="button" className="btn btn-secondary" onClick={addNovaAtividade}>Add Atividade</button>
-                                    </Container100>
-
-                                </div>
-                                : preench.trabalhou === "2" ?
+            <div className="d-flex flex justify-content-between bg-dark p-1">
+                <div className='mx-2 d-flex'>
+                    <nav aria-label="...">
+                        <ul className="pagination">
+                            {listPag}
+                        </ul>
+                    </nav>
+                </div>
+                <div>
+                    <button type="button" className="btn btn-warning mx-2" onClick={() => { setRefresh(!refresh) }}><Icon.FaRedoAlt /></button>
+                    <ModalButton ButtonColor='success' ModalName='PreenchRH' ButtonTitle='Responder' ModalTitle='Preencher Novo Relatório' func={SendDatatoDB} ConfirmTitle='Responder'>
+                        <form>
+                            <div className="input-group-sm mb-3 in-gp">
+                                <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Email</label>
+                                <input type="text" className="form-control" disabled placeholder="Email" value={preench.email} onChange={e => { setPreench({ ...preench, email: e.target.value }) }} />
+                            </div>
+                            <div className="input-group-sm mb-3 in-gp">
+                                <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Data de preenchimento</label>
+                                <input type="date" className="form-control" placeholder="Data" value={preench.data} onChange={e => { setPreench({ ...preench, data: e.target.value }) }} />
+                            </div>
+                            <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Trabalhou nesta data?</label>
+                            <select className="in-sel form-select" defaultValue="0" onChange={e => { setPreench({ ...preench, trabalhou: e.target.value }) }}>
+                                <option value="0" disabled>Trabalhou nesta data?</option>
+                                <option value="1">Sim</option>
+                                <option value="2">Atestado Médico</option>
+                                <option value="3">Folga</option>
+                            </select>
+                            {
+                                preench.trabalhou === "1" ?
                                     <div className="input-group-sm mb-3 in-gp">
-                                        <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Atestado Médico</label>
-                                        <input type="text" className="form-control" placeholder="Atestado" value={preench.just} onChange={e => { setPreench({ ...preench, just: e.target.value }) }} />
+                                        <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Atividades</label>
+
+                                        <Container100>
+                                            <table className="text-center tabela-ativ">
+                                                <thead style={{ fontSize: "0.8em", backgroundColor: "#777", color: "white" }}>
+                                                    <tr>
+                                                        <th className='p-1'>Centro de Custo</th>
+                                                        <th>OS</th>
+                                                        <th>Atendimento</th>
+                                                        <th>Atividade</th>
+                                                        <th>Horário Inicio</th>
+                                                        <th>Horário Término</th>
+                                                        <th>Descrição</th>
+                                                        <th>Desvio</th>
+                                                        <th><Icon.FaTrash style={{ color: 'red' }} /></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {Ativ}
+                                                </tbody>
+                                            </table>
+                                            <button type="button" className="btn btn-secondary" onClick={() => addNovaAtividade()}>Add Atividade</button>
+                                        </Container100>
+
                                     </div>
-                                    : preench.trabalhou === "3" ?
-                                        <select className="in-sel form-select" defaultValue="0" onChange={e => { setPreench({ ...preench, autorizacao: e.target.value }) }}>
-                                            <option value="0" disabled>Autorização da folga</option>
-                                            {folgaPerm}
-                                        </select>
-                                        : <></>
-                        }
-                        <div className="input-group-sm mb-3 in-gp">
-                            <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Observações</label>
-                            <input type="text" className="form-control" placeholder="Observações" value={preench.obs} onChange={e => { setPreench({ ...preench, obs: e.target.value }) }} />
-                        </div>
-                    </form>
-                </ModalButton>
+                                    : preench.trabalhou === "2" ?
+                                        <div className="input-group-sm mb-3 in-gp">
+                                            <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Atestado Médico</label>
+                                            <input type="text" className="form-control" placeholder="Atestado" value={preench.just} onChange={e => { setPreench({ ...preench, just: e.target.value }) }} />
+                                        </div>
+                                        : preench.trabalhou === "3" ?
+                                            <select className="in-sel form-select" defaultValue="0" onChange={e => { setPreench({ ...preench, autorizacao: e.target.value }) }}>
+                                                <option value="0" disabled>Autorização da folga</option>
+                                                {folgaPerm}
+                                            </select>
+                                            : <></>
+                            }
+                            <div className="input-group-sm mb-3 in-gp">
+                                <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Observações</label>
+                                <input type="text" className="form-control" placeholder="Observações" value={preench.obs} onChange={e => { setPreench({ ...preench, obs: e.target.value }) }} />
+                            </div>
+                        </form>
+                    </ModalButton>
+                </div>
             </div>
 
             <Container100>
-                <GenTable ColNumber='10' Color='light' HeaderColor='dark' ColumsName={['Email', 'Data', 'Trabalhou', 'Obs', 'Aut. Folga', 'Atividades']}>
+                <GenTable ColNumber='10' Color='light' HeaderColor='dark' ColumsName={['Email', 'Data', 'Trabalhou', 'Obs', 'Aut. Folga', 'Detalhes']}>
                     {RHs}
                 </GenTable>
 
-                <div className="col-md-2 bg-danger">
+                <div className="col-md-2 bg-info">
                     <div className="row">
-                        <h1>Filtros e opções</h1>
+                        <h1 style={{ fontSize: "1.3em" }} className="p-2 bg-secondary text-white text-center">Filtros</h1>
+
+                        {RHPerm === true ?
+                            <div className="input-group-sm mb-3 in-gp">
+                                <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Funcionário</label>
+                                <select className='in-sel form-select' value={filtros.email} onChange={e => { setFiltros({ ...filtros, email: e.target.value }) }}>
+                                    <option value={""}>Todos</option>
+                                    {emails}
+                                </select>
+                            </div> : <></>
+                        }
+
+                        <div className="input-group-sm mb-3 in-gp">
+                            <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>De</label>
+                            <input type="date" className="form-control" value={filtros.datai} onChange={e => setFiltros({ ...filtros, datai: e.target.value })} />
+                        </div>
+                        <div className="input-group-sm mb-3 in-gp">
+                            <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Até</label>
+                            <input type="date" className="form-control" value={filtros.dataf} onChange={e => setFiltros({ ...filtros, dataf: e.target.value })} />
+                        </div>
+                        {/* <div className="input-group-sm mb-3 in-gp">
+                            <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Centro de Custo</label>
+                            <select className='in-sel form-select' defaultValue={""} onChange={e => { setFiltros({ ...filtros, cc: e.target.value }) }}>
+                                <option value={""}>Projeto</option>
+                                {projetos}
+                            </select>
+                        </div> */}
+                        <div className="input-group-sm mb-3 in-gp">
+                            <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Trabalhou</label>
+                            <select className="in-sel form-select" defaultValue="0" onChange={e => { setFiltros({ ...filtros, trabalhou: e.target.value }) }}>
+                                <option value="0">Trabalhou?</option>
+                                <option value="1">Sim</option>
+                                <option value="2">Atestado Médico</option>
+                                <option value="3">Folga</option>
+                            </select>
+                        </div>
+
+                        <div className="input-group-sm mb-3 in-gp">
+                            <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Quantidade por Página</label>
+                            <select className="in-sel form-select" value={qPag} onChange={e => setQpag(e.target.value)}>
+                                <option value="10">10</option>
+                                <option value="15">15</option>
+                                <option value="25">25</option>
+                                <option value="1000">1000</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </Container100>

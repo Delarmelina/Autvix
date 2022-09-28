@@ -2,11 +2,11 @@ import React from 'react'
 import { Routes, Route } from "react-router-dom";
 
 import "./style.css"
-import * as Icon from 'react-icons/fa'
 
 import { Navegation } from "./navegation"
-import { MeusRHs } from './typeof/RH/MeusRHs';
 import { RH } from './typeof/RH/RH';
+import { RHDetails } from './typeof/RH/rhDetails'
+import { PageNotFound } from '../../components/layout/components/PageNotFound';
 
 export const Relatorios = () => {
 
@@ -14,11 +14,8 @@ export const Relatorios = () => {
     <Routes>
       <Route path="/" element={<Navegation />} />
       <Route path="/RH" element={<RH />} />
-      <Route path="/RH/MeusRHs" element={<MeusRHs />} />
-      <Route path="*" element={<div className='d-flex bg-secondary text-warning align-items-center justify-content-center' style={{ fontSize: "25px", height: "100%" }}>
-        <Icon.FaExclamationCircle className='mx-4 text-warning' />
-        <span>Page not found !!!</span>
-      </div>} />
+      <Route path="/RH/:id_ativ" element={<RHDetails />} />
+      <Route path="*" element={<PageNotFound />} />
     </Routes>
   )
 }

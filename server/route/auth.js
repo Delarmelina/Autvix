@@ -130,7 +130,7 @@ router.post('/validate', validateToken, async function (req, res) {
 
             // If Usuario encontrado, então o token é valido e retorna "encontrado"
             if (result.length > 0) {
-                return res.status(200).json( result[0].matricula )
+                return res.status(200).json(result[0].matricula)
             } else {
                 return res.status(400).json({ msg: "User not found" })
             }
@@ -142,5 +142,32 @@ router.post('/validate', validateToken, async function (req, res) {
         }
     }
 });
+
+router.post('/testPerm', validateToken, async function (req, res) {
+    const token = req.headers.authorization;    // Obtem o token do header do front end
+    const tags = req.body.tags
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    // let pool = await sql.connect(config);
+    // let text = knex.select('Usuarios')
+    //     .where('email', '=', user.email)
+    //     .toString();
+    // let result = await pool.request().query(text);
+
+    let pool = await sql.connect(config);
+    let text = knex('Perm_users').where({ matricula: decoded.id }).toString()
+    let result = await pool.request().query(text);
+
+    let usertags = []
+    
+    result.recordset.map(tag => {
+        usertags.push(tag.id_tipo)
+    })
+
+    let resp = tags.filter(function(item){ return usertags.indexOf(item) > -1}).length
+
+    return res.status(200).json({ perm : resp }) // Retorna o token de autenticação para o front end
+})
 
 module.exports = router;
