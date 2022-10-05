@@ -18,8 +18,6 @@ router.post('/getany', async function (req, res) {
 router.post('/getCode', async function (req, res) {
     const { code } = req.body;
 
-    console.log(code)
-
     let pool = await sql.connect(config);
     let result = (await pool.request().query(code));
     return res.status(200).json(result.recordset)
@@ -32,8 +30,11 @@ router.post('/newRowOnTable', async function (req, res,) {
     const data = req.body.data;
     const table = req.body.table;
 
+    console.log(data)
+
     try {
         // Adiciona o novo dado na tabela recebida
+        console.log(knex(table).insert(data).toString());
         await knex(table).insert(data);
 
         // Retorna que o dado foi inserido corretamente

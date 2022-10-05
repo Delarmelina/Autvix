@@ -22,16 +22,16 @@ export const RHDetails = (props) => {
         <>
           <Container100>
             <div className="col-md-12 bg-dark">
-              
+
               <a className='p-0' href={`/relatorios/RH/`}><button className='btn button btn-info m-1'>Voltar</button></a>
             </div>
           </Container100>
           <Container100>
             <div className="col-md-6 bg-secondary text-center text-white">
               <div className="row my-4">
-                <h4>{request[0].nome} - {request[0].matricula}</h4>
+                <h4>{request[0].matricula} - {request[0].nome}</h4>
                 <h4>Data de Preenchimento: {date[2]}/{date[1]}/{date[0]}</h4>
-                <h4>Trabalhou nesta data? {request[0].trabalhou == 1 ? "Sim" : request[0].trabalhou == 2 ? "Atestado Médico" : "Folga"}</h4>
+                <h4>Trabalhou nesta data? {request[0].trabalhou === 1 ? "Sim" : request[0].trabalhou === 2 ? "Atestado Médico" : "Folga"}</h4>
               </div>
             </div>
 
@@ -52,11 +52,11 @@ export const RHDetails = (props) => {
                 let hi = data.hora_inicio.substr(data.hora_inicio.indexOf("T") + 1, 5).split(":")
                 let hf = data.hora_final.substr(data.hora_final.indexOf("T") + 1, 5).split(":")
 
-                return <div key={index} className='border border-dark border-1 mt-1'  style={{ backgroundColor: '#CCC' }}>
-                  <Container100> 
+                return <div key={index} className='border border-dark border-1 mt-1' style={{ backgroundColor: '#CCC' }}>
+                  <Container100>
                     <div className="col-md-4">
                       <div className="row my-1">
-                        <h4><strong>{data.id_cc} {data.os > 0 ? `- OS${data.os}` : ""}</strong></h4>
+                        <h4><strong>{data.id_cc} {data.os > 0 ? `- OS${(data.os).toString()}` : ""}</strong></h4>
                         <h4>Horário: {hi[0]}:{hi[1]} as {hf[0]}:{hf[1]}</h4>
                         <h4>Atendimento {data.atend}</h4>
                         <h4>Atividade: {data.ativ}</h4>
@@ -69,7 +69,7 @@ export const RHDetails = (props) => {
                     </div>
                     <div className="col-md-4">
                       <div className="row my-1 text-center">
-                        <h4>{data.desvio == 0 ? "Não possui Desvios" : "Atividade com Desvio"}</h4>
+                        <h4>{data.desvio === 0 ? "Não possui Desvios" : "Atividade com Desvio"}</h4>
                         <h4>{data.arq}</h4>
                       </div>
                     </div>
@@ -82,6 +82,7 @@ export const RHDetails = (props) => {
     }
 
     obterDados()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (

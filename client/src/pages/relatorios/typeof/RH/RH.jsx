@@ -9,6 +9,9 @@ import { ModalButton } from '../../../../components/components/modalButton'
 import { GenTable } from '../../../../components/components/genTable'
 import { Container100 } from '../../../../components/components/container100'
 
+import * as Excel from "exceljs";
+import * as FileSaver from 'file-saver';
+
 export const RH = () => {
 
     // Variáveis de renderização
@@ -35,8 +38,7 @@ export const RH = () => {
         email: "",
         datai: "",
         dataf: "",
-        cc: "",
-        trabalhou: 0
+        trabalhou: ""
     })
     const [preench, setPreench] = React.useState({          // Função que armazena o preenchimento do novo RH
         matricula: "",
@@ -114,7 +116,7 @@ export const RH = () => {
                 <option key={os} value={os}>{os}</option>
             )
         }))
-
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     // Função que controla os campos do formulario de preenchimento para casa o funcionario tenha ou não trabalhado
@@ -122,6 +124,7 @@ export const RH = () => {
         preench.trabalhou === '1' ? setPreench({ ...preench, autorizacao: 0, just: "" }) :
             preench.trabalhou === '2' ? setPreench({ ...preench, id_ativ: 0, just: "" }) :
                 preench.trabalhou === '3' ? setPreench({ ...preench, id_ativ: 0, autorizacao: 0 }) : localStorage.getItem("token");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [preench.trabalhou])
 
     // Função que renderiza a tabela de RH preenchidos
@@ -139,24 +142,24 @@ export const RH = () => {
             AuxCode = 1
         }
 
-        if (filtros.email > 0 && AuxCode == 0) {
+        if (filtros.email > 0 && AuxCode === 0) {
             SQLCode += `where u.matricula = '${filtros.email}' `
             AuxCode = 1
-        } else if (filtros.email > 0 && AuxCode == 1) {
+        } else if (filtros.email > 0 && AuxCode === 1) {
             SQLCode += `and u.matricula = '${filtros.email}' `
         }
 
-        if (filtros.datai != '' && AuxCode == 0) {
+        if (filtros.datai !== '' && AuxCode === 0) {
             SQLCode += `where p.data > '${filtros.datai}' `
             AuxCode = 1
-        } else if (filtros.datai != '' && AuxCode == 1) {
+        } else if (filtros.datai !== '' && AuxCode === 1) {
             SQLCode += `and p.data > '${filtros.datai}' `
         }
 
-        if (filtros.dataf != '' && AuxCode == 0) {
+        if (filtros.dataf !== '' && AuxCode === 0) {
             SQLCode += `where p.data < '${filtros.dataf}' `
             AuxCode = 1
-        } else if (filtros.dataf != '' && AuxCode == 1) {
+        } else if (filtros.dataf !== '' && AuxCode === 1) {
             SQLCode += `and p.data < '${filtros.dataf}' `
         }
 
@@ -169,7 +172,7 @@ export const RH = () => {
 
                 setListPag(arr.map(i => {
                     return <li key={i} className="page-item active" aria-current="page">
-                        <a className="page-link" href="#" onClick={e => setPagination(i)}>{i + 1}</a>
+                        <a className="page-link" href="#top" onClick={e => setPagination(i)}>{i + 1}</a>
                     </li>
                 }))
 
@@ -187,7 +190,7 @@ export const RH = () => {
                         <tr key={index}>
                             <td>{RH.email}</td>
                             <td>{date[2]}/{date[1]}/{date[0]}</td>
-                            <td>{RH.trabalhou == 1 ? "Sim" : RH.trabalhou == 2 ? "Atestado" : "Folga"}</td>
+                            <td>{RH.trabalhou === 1 ? "Sim" : RH.trabalhou === 2 ? "Atestado" : "Folga"}</td>
                             <td>{RH.obs}</td>
                             <td>{RH.trabalhou === 3 ? RH.aut : ""}</td>
                             <td><a className='p-0' href={`/relatorios/RH/${RH.id_ativ}`}><button className='btn btn-info p-0' style={{ width: "60px" }}>+</button></a></td>
@@ -233,6 +236,7 @@ export const RH = () => {
                     <td style={{}}>
                         <select className='input-ativ' value={ativ.tipo_atend} onChange={e => {
                             let tempAtiv = atividades
+                            console.log(i, ativ.tipo_atend)
                             tempAtiv[i].tipo_atend = e.target.value
                             setAtividades(tempAtiv)
                             setQtAtiv(!qtAtiv)
@@ -288,6 +292,7 @@ export const RH = () => {
                 </tr>
             )
         }))
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [qtAtiv])
 
     // Função usada para controlar o botão que insere nova atividade no RH
@@ -296,8 +301,8 @@ export const RH = () => {
             id_ativ: 0,
             id_cc: "",
             os: 0,
-            tipo_atend: 0,
-            tipo_ativ: 0,
+            tipo_atend: 1,
+            tipo_ativ: 1,
             hora_inicio: "",
             hora_final: "",
             descricao: "",
@@ -308,7 +313,7 @@ export const RH = () => {
             tmp_desv: "",
             aut_desv: ""
         })
-
+        console.log(atividades)
         setAtividades(newAtiv)
         setQtAtiv(!qtAtiv)
     }
@@ -340,6 +345,47 @@ export const RH = () => {
         setRefresh(!refresh)
     }
 
+    async function gerarPDF() {
+
+        let pathName = "Levantamento -"
+        let SQLCode = "select id_cc, SUM(DATEDIFF(hour, hora_inicio, hora_final)) as diff from Preench_Rh p join Atividades a on p.id_ativ = a.id_ativ "
+
+        if (filtros.dataf === "" && filtros.datai !== "") {
+            SQLCode += `where data > '${filtros.datai}' `
+            pathName += ` de ${filtros.datai}.xlsx`
+        } else if (filtros.dataf !== "" && filtros.datai === "") {
+            SQLCode += `where data < '${filtros.dataf}' `
+            pathName += ` até ${filtros.dataf}.xlsx`
+        } else if (filtros.dataf !== "" && filtros.datai !== "") {
+            SQLCode += `where data > '${filtros.datai}' and data < '${filtros.dataf}' `
+            pathName += ` de ${filtros.datai} até ${filtros.dataf}.xlsx`
+        } else {
+            pathName += ` geral.xlsx`
+        }
+
+        const workbook = new Excel.Workbook();
+        const worksheet = workbook.addWorksheet("Levantamento");
+
+        worksheet.columns = [
+            { header: 'Centro de Custo', key: 'id_cc', width: 20 },
+            { header: 'Horas', key: 'diff', width: 10 }
+        ];
+
+        SQLCode += "group by id_cc"
+        console.log(SQLCode)
+        let res = await GetCode(SQLCode)
+
+        res.map(data => {
+            worksheet.addRow({ id_cc: data.id_cc, diff: data.diff });
+            return null
+        })
+
+        workbook.xlsx.writeBuffer().then(data => {
+            const blob = new Blob([data], { type: "application/json" });
+            FileSaver.saveAs(blob, pathName);
+        });
+    }
+
     return (
         <>
             <div className="d-flex flex justify-content-between bg-dark p-1">
@@ -351,6 +397,7 @@ export const RH = () => {
                     </nav>
                 </div>
                 <div>
+                    <button type="button" className="btn btn-info mx-2" onClick={() => { gerarPDF() }}><strong><Icon.FaFileDownload /></strong></button>
                     <button type="button" className="btn btn-warning mx-2" onClick={() => { setRefresh(!refresh) }}><Icon.FaRedoAlt /></button>
                     <ModalButton ButtonColor='success' ModalName='PreenchRH' ButtonTitle='Responder' ModalTitle='Preencher Novo Relatório' func={SendDatatoDB} ConfirmTitle='Responder'>
                         <form>
@@ -423,6 +470,7 @@ export const RH = () => {
                     {RHs}
                 </GenTable>
 
+                {/* LÓGICA DOS FILTROS */}
                 <div className="col-md-2 bg-info">
                     <div className="row">
                         <h1 style={{ fontSize: "1.3em" }} className="p-2 bg-secondary text-white text-center">Filtros</h1>
@@ -436,7 +484,6 @@ export const RH = () => {
                                 </select>
                             </div> : <></>
                         }
-
                         <div className="input-group-sm mb-3 in-gp">
                             <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>De</label>
                             <input type="date" className="form-control" value={filtros.datai} onChange={e => setFiltros({ ...filtros, datai: e.target.value })} />
@@ -445,13 +492,6 @@ export const RH = () => {
                             <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Até</label>
                             <input type="date" className="form-control" value={filtros.dataf} onChange={e => setFiltros({ ...filtros, dataf: e.target.value })} />
                         </div>
-                        {/* <div className="input-group-sm mb-3 in-gp">
-                            <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Centro de Custo</label>
-                            <select className='in-sel form-select' defaultValue={""} onChange={e => { setFiltros({ ...filtros, cc: e.target.value }) }}>
-                                <option value={""}>Projeto</option>
-                                {projetos}
-                            </select>
-                        </div> */}
                         <div className="input-group-sm mb-3 in-gp">
                             <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Trabalhou</label>
                             <select className="in-sel form-select" defaultValue="0" onChange={e => { setFiltros({ ...filtros, trabalhou: e.target.value }) }}>
@@ -461,7 +501,6 @@ export const RH = () => {
                                 <option value="3">Folga</option>
                             </select>
                         </div>
-
                         <div className="input-group-sm mb-3 in-gp">
                             <label className="form-label" style={{ backgroundColor: "#ccc#", fontSize: "0.8em" }}>Quantidade por Página</label>
                             <select className="in-sel form-select" value={qPag} onChange={e => setQpag(e.target.value)}>

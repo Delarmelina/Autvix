@@ -11,6 +11,7 @@ import { PageNotFound } from './components/PageNotFound';
 import { Projetos } from '../../pages/projetos/index'
 import { Colaboradores } from '../../pages/colaboradores/index'
 import { Relatorios } from '../../pages/relatorios/index'
+import { Inicial } from '../../pages/home/inicial'
 
 export const Layout = () => {
 
@@ -22,6 +23,7 @@ export const Layout = () => {
 
             <main className=''>
                 <Routes>
+                    <Route path="/" element={<Inicial />}/>
                     <Route path="/projetos" element={<Projetos />} />
                     <Route path="/colaboradores" element={<Colaboradores />} />
                     <Route path="/relatorios/*" element={<Relatorios />} />

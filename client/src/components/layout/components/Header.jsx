@@ -35,7 +35,8 @@ export const Header = () => {
             {/* Create user bottom on end menu */}
             <div className='nav-item text-center' style={{ cursor: "pointer" }}>
                 <Icon.FaRegBell className='text-secondary mx-2' size={30} />
-                <Icon.FaUserCircle className='text-secondary mx-2' size={30} />
+                <Icon.FaUserCircle className='text-secondary mx-2' size={30}/>
+                <Icon.FaPowerOff className='text-secondary mx-2' size={30} onClick={() => localStorage.setItem("token", "")}/>
                 <Icon.FaTh className='text-secondary mx-2 hovercolor' size={30} />
             </div>
         </header>
